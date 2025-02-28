@@ -22,8 +22,37 @@ class Kernel extends HttpKernel
         \Illuminate\Foundation\Http\Middleware\ValidatePostSize::class,
         \App\Http\Middleware\TrimStrings::class,
         \Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::class,
-    ];
+        //\App\Http\Middleware\RedirectIfAuthenticated::class,
 
+    ];
+    protected function schedule(Schedule $schedule)
+{
+    // 14-Day Follow-Up
+    $schedule->call(function () {
+        $applications = Application::where('status', 'approved')
+            ->whereDate('approval_date', '=', now()->subDays(14))
+            ->get();
+
+        foreach ($applications as $application) {
+            Mail::to($application->applicant->email)
+                ->send(new StateResourcesMail($application));
+        }
+    })->daily();
+
+    // 30-Day Follow-Up
+    $schedule->call(function () {
+        $applications = Application::where('status', 'approved')
+            ->whereDate('approval_date', '=', now()->subDays(30))
+            ->get();
+
+        foreach ($applications as $application) {
+            Mail::to($application->applicant->email)
+                ->send(new PartnershipsLetterMail($application));
+        }
+    })->daily();
+}
+
+    
     /**
      * The application's route middleware groups.
      *
@@ -37,7 +66,7 @@ class Kernel extends HttpKernel
             \Illuminate\View\Middleware\ShareErrorsFromSession::class,
             \App\Http\Middleware\VerifyCsrfToken::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
-            \App\Http\Middleware\CorsMiddleware::class,
+            //\App\Http\Middleware\CorsMiddleware::class,
 
         ],
 

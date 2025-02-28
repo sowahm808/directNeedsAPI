@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Application;
 use Illuminate\Http\Request;
-
 class ApplicationController extends Controller
 {
     public function index()
@@ -88,5 +87,38 @@ class ApplicationController extends Controller
     $applications = Application::where('status', $status)->get();
     return response()->json($applications);
 }
+
+public function closeFile($applicationId)
+{
+    try {
+        $application = Application::findOrFail($applicationId);
+
+        if ($application->status !== 'approved') {
+            return response()->json(['error' => 'Only approved applications can be closed.'], 403);
+        }
+
+        $application->status = 'closed';
+        $application->save();
+
+        return response()->json(['message' => 'File closed successfully']);
+    } catch (\Exception $e) {
+        \Log::error('Error closing file', ['error' => $e->getMessage()]);
+        return response()->json(['error' => 'Failed to close file. Please try again later.'], 500);
+    }
+}
+public function addExceptionReason(Request $request, $applicationId)
+{
+    $validatedData = $request->validate([
+        'reason' => 'required|string',
+    ]);
+
+    $application = Application::findOrFail($applicationId);
+    $application->exception_reason = $validatedData['reason'];
+    $application->save();
+
+    return response()->json(['message' => 'Reason added successfully']);
+}
+
+
 
 }

@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\VerbalContactController;
 use App\Http\Controllers\Api\ExpenseStatementController;
 use App\Http\Controllers\Api\FirstContactController;
 use App\Http\Controllers\Api\ApprovalLetterController;
+use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\AuditLogController;
 use App\Http\Controllers\Api\UserRoleController;
 use App\Http\Controllers\Api\AuthController;
@@ -32,6 +33,11 @@ Route::middleware('auth:sanctum')->group(function () {
     // Application Management
     Route::apiResource('applications', ApplicationController::class);
     Route::get('applications/status/{status}', [ApplicationController::class, 'getByStatus']);
+    Route::patch('applications/{applicationId}/close-file', [ApplicationController::class, 'closeFile']);
+    Route::post('applications/{applicationId}/exception-reason', [ApplicationController::class, 'addExceptionReason']);
+    
+    // State Resources Letter Route
+    Route::post('notifications/applications/{applicationId}/state-resources', [NotificationController::class, 'sendStateResourcesLetter']);
 
     //Notes
     Route::prefix('applications/{applicationId}')->group(function () {

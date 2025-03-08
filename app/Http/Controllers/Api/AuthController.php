@@ -68,6 +68,10 @@ class AuthController extends Controller
             ], 422);
         }
 
+        // Convert 'admin' to 'administrator' if necessary
+        $role = $request->role === 'admin' ? 'administrator' : $request->role;
+
+
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,

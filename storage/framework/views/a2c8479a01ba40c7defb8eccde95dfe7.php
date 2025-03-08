@@ -7,18 +7,18 @@
     </div>
 
     <div class="content">
-        <p>Dear {{ $applicantName }},</p>
+        <p>Dear <?php echo e($applicantName); ?>,</p>
 
         <p>We are pleased to inform you that your application for assistance through The Grandparents Community Network (TGCN) Direct Needs Program has been approved. After reviewing your request and supporting documents, we have determined that you qualify for assistance in the following category:</p>
 
         <h3>Approved Assistance Category:</h3>
         <ul>
-            <li><strong>Rent:</strong> ${{ $grantAmount }} paid to Landlord, RPH Properties</li>
+            <li><strong>Rent:</strong> $<?php echo e($grantAmount); ?> paid to Landlord, RPH Properties</li>
             <li>Website: <a href="https://www.rhpresidentconnect.com/">RPH Properties</a></li>
         </ul>
 
         <h3>Explanation of Grant:</h3>
-        <p>The total approved grant of ${{ $grantAmount }} has been provided to support you in reducing everyday challenges associated with raising your grandchildren. We hope this assistance eases some of the financial burdens related to household needs, allowing you to continue providing a stable, loving, and nurturing environment for your grandchildren.</p>
+        <p>The total approved grant of $<?php echo e($grantAmount); ?> has been provided to support you in reducing everyday challenges associated with raising your grandchildren. We hope this assistance eases some of the financial burdens related to household needs, allowing you to continue providing a stable, loving, and nurturing environment for your grandchildren.</p>
 
         <h3>Payment Process:</h3>
         <p>Payments will be made directly to the service provider on your behalf. If applicable, please ensure that the provider is aware of the payment arrangement. Kindly send receipts of all purchases related to this grant. If any additional steps are needed from your end, we will notify you promptly.</p>
@@ -50,3 +50,4 @@
         &copy; 2025 The Grandparents Community Network. All rights reserved.
     </div>
 </div>
+<?php /**PATH /Users/cyberchip/projects/directNeedsProgram/direct-needs-backend/resources/views/emails/approval-letter.blade.php ENDPATH**/ ?>

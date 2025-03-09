@@ -22,6 +22,8 @@ Route::get('/sanctum/csrf-cookie', [CsrfCookieController::class, 'show']);
 // Public Authentication Routes
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/signup', [AuthController::class, 'signup']);
+Route::get('/auth/google', [AuthController::class, 'redirectToGoogle']);
+Route::get('/auth/google/callback', [AuthController::class, 'handleGoogleCallback']);
 
 // Protected Routes with Sanctum Middleware
 Route::middleware('auth:sanctum')->group(function () {
@@ -35,7 +37,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('applications/status/{status}', [ApplicationController::class, 'getByStatus']);
     Route::patch('applications/{applicationId}/close-file', [ApplicationController::class, 'closeFile']);
     Route::post('applications/{applicationId}/exception-reason', [ApplicationController::class, 'addExceptionReason']);
-    
+
     // State Resources Letter Route
     Route::post('notifications/applications/{applicationId}/state-resources', [NotificationController::class, 'sendStateResourcesLetter']);
 
@@ -48,7 +50,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('notes/{id}', [ApplicationNoteController::class, 'destroy']);
     });
 
-   
+
     Route::prefix('applications/{applicationId}/first-contacts')->group(function () {
         Route::post('/', [FirstContactController::class, 'schedule']);
         Route::patch('{id}/status', [FirstContactController::class, 'updateStatus']);
@@ -67,7 +69,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Diary Reminders
     Route::apiResource('diary-reminders', DiaryReminderController::class);
 
-    
+
     // Payment Routes
     Route::prefix('applications/{applicationId}/payments')->group(function () {
     Route::get('/', [PaymentController::class, 'index']);

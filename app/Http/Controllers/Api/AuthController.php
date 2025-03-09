@@ -9,10 +9,11 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
+use Laravel\Socialite\Facades\Socialite;
 
 class AuthController extends Controller
 {
-    // **Login and Issue Token**
+    // **Login with Email and Password**
     public function login(Request $request)
     {
         $request->validate([
@@ -52,7 +53,7 @@ class AuthController extends Controller
         ], 200);
     }
 
-    // **Sign-up**
+    // **Sign-up with Email and Password**
     public function signup(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -71,13 +72,12 @@ class AuthController extends Controller
         // Convert 'admin' to 'administrator' if necessary
         $role = $request->role === 'admin' ? 'administrator' : $request->role;
 
-
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'role' => $request->role,
-            'remember_token' => Str::random(60) // Generate remember_token here
+            'role' => $role,
+            'remember_token' => Str::random(60)
         ]);
 
         // Automatically log in the user after signup
@@ -94,6 +94,50 @@ class AuthController extends Controller
             'token' => $token
         ], 201);
     }
+
+    // **Google OAuth Redirect URL**
+    public function redirectToGoogle()
+    {
+        return response()->json([
+            'redirect_url' => Socialite::driver('google')->stateless()->redirect()->getTargetUrl()
+        ]);
+    }
+
+    // **Handle Google Login Callback**
+    public function handleGoogleCallback(Request $request)
+{
+    try {
+        $googleUser = Socialite::driver('google')->stateless()->user();
+
+        // Check if user already exists
+        $user = User::where('email', $googleUser->getEmail())->first();
+
+        if (!$user) {
+            // Assign "applicant" as the default role for new Google users
+            $defaultRole = 'applicant';
+
+            // Create a new user
+            $user = User::create([
+                'name' => $googleUser->getName(),
+                'email' => $googleUser->getEmail(),
+                'password' => Hash::make(Str::random(12)), // Generate a random password
+                'role' => $defaultRole, // Assign default role
+                'remember_token' => Str::random(60),
+                'google_id' => $googleUser->getId(),
+            ]);
+        }
+
+        // Generate API Token
+        $token = $user->createToken('auth_token')->plainTextToken;
+
+        // ✅ Ensure the response **redirects to Angular frontend**
+        return redirect()->to(env('FRONTEND_URL') . "/google-auth-success?token={$token}&role={$user->role}");
+
+    } catch (\Exception $e) {
+        return redirect()->to(env('FRONTEND_URL') . "/google-auth-failed?error=" . urlencode($e->getMessage()));
+    }
+}
+
 
     // **Logout and Revoke Token**
     public function logout(Request $request)

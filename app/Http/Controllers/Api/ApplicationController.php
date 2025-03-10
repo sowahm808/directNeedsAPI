@@ -13,6 +13,8 @@ class ApplicationController extends Controller
 
         $applications = Application::with(['applicant', 'processor'])->get();
         return response()->json($applications);
+
+
     }
 
     public function store(Request $request)

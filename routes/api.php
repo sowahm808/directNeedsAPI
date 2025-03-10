@@ -64,7 +64,9 @@ Route::middleware('auth:sanctum')->group(function () {
     // Approval Letter
     Route::prefix('applications/{applicationId}/approval-letter')->group(function () {
     Route::get('generate', [ApprovalLetterController::class, 'generate']);
-    });
+    // Letter Generation Routes
+    Route::post('applications/generate-letters', [ApprovalLetterController::class, 'batchGenerate']);
+});
 
     // Diary Reminders
     Route::apiResource('diary-reminders', DiaryReminderController::class);

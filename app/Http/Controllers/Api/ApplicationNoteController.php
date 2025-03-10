@@ -15,21 +15,47 @@ class ApplicationNoteController extends Controller
     }
 
     public function store(Request $request, $applicationId)
-    {
-        $validatedData = $request->validate([
-            'note_type' => 'required|in:initial,follow_up,contact,approval,other',
-            'note' => 'required|string',
-            'user_id' => 'required|exists:users,id'
-        ]);
-    
-        // Attach the application_id from the route parameter
-        $validatedData['application_id'] = $applicationId;
-        $validatedData['user_id'] = auth()->id(); // Using authenticated user ID
-    
-        $note = ApplicationNote::create($validatedData);
-        return response()->json($note, 201);
+{
+    $validatedData = $request->validate([
+        'note_type' => 'required|in:initial,follow_up,contact,approval,other',
+        'note' => 'required|string',
+        'user_id' => 'required|exists:users,id'
+    ]);
+
+    // Fetch the application
+    $application = \App\Models\Application::find($applicationId);
+    if (!$application) {
+        return response()->json(['message' => 'Application not found'], 404);
     }
-    
+
+    // Set the application_id from the route parameter
+    $validatedData['application_id'] = $applicationId;
+    $validatedData['user_id'] = auth()->id(); // Using authenticated user ID
+
+    // Create the note
+    $note = ApplicationNote::create($validatedData);
+
+    // ** Update Application based on note type **
+    if ($validatedData['note_type'] === 'approval') {
+        $application->status = 'approved';
+        $application->approval_date = now();
+    } elseif ($validatedData['note_type'] === 'follow_up') {
+        $application->status = 'processing';
+    } elseif ($validatedData['note_type'] === 'contact') {
+        $application->status = 'first_contact';
+    }
+
+    // Save the updated application
+    $application->save();
+
+    return response()->json([
+        'message' => 'Note added successfully',
+        'note' => $note,
+        'updated_application' => $application
+    ], 201);
+}
+
+
 
     public function getNotesByApplicationId($applicationId)
 {
@@ -60,7 +86,7 @@ class ApplicationNoteController extends Controller
     {
         // Find the note or return 404 if not found
         $note = ApplicationNote::findOrFail($id);
-    
+
         // Validate the incoming request data
         $validatedData = $request->validate([
             'note_type' => 'required|in:overview,information_request,follow_up',
@@ -68,14 +94,14 @@ class ApplicationNoteController extends Controller
             'user_id' => 'required|exists:users,id',
             'application_id' => 'required|exists:applications,id'
         ]);
-    
+
         // Update the note with validated data
         $note->update($validatedData);
-    
+
         // Return the updated note as JSON
         return response()->json($note);
     }
-    
+
 
     public function destroy($id)
     {

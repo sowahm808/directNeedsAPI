@@ -12,54 +12,71 @@ use Illuminate\Http\Request;
 
 class ApprovalLetterController extends Controller
 {
-    public function generate($applicationId)
-    {
-        try {
-            // Fetch Application Details
-            $application = Application::with('applicant')->findOrFail($applicationId);
+    public function generate(Request $request, $applicationId)
+{
+    $request->validate([
+        'letter_type' => 'required|in:approval,denial,request_information',
+    ]);
 
-            // Generate PDF
-            $pdf = Pdf::loadView('emails.approval-letter', [
-                'applicantName' => $application->applicant->name,
-                'grantAmount' => $application->grant_amount,
-                'approvalDate' => $application->approval_date
-            ]);
+    $letterType = $request->letter_type;
 
-                    // Ensure Directory Exists
-            $directory = storage_path('app/public/storage/approval_letters');
-            if (!file_exists($directory)) {
-                mkdir($directory, 0755, true);
-            }
+    // Fetch Application Details
+    $application = Application::with('applicant')->findOrFail($applicationId);
 
-            // Save PDF to Storage
-            $fileName = "approval_letter_{$applicationId}.pdf";
-            $filePath = "app/public/storage/approval_letters/$fileName";
-             // Check if directory exists, if not create it
-            if (!file_exists(storage_path('app/public/approval_letters'))) {
-            mkdir(storage_path('app/public/approval_letters'), 0755, true);
-            }
+    // Determine view file based on letter type
+    $viewFile = match ($letterType) {
+        'approval' => 'emails.approval-letter',
+        'denial' => 'emails.denial-letter',
+        'request_information' => 'emails.request-information-letter',
+        default => 'emails.approval-letter',
+    };
 
-            // Save using Laravel Storage
-            Storage::put($filePath, $pdf->output());
+    // Generate PDF
+    $pdf = Pdf::loadView($viewFile, [
+        'applicantName' => $application->applicant->name,
+        'grantAmount' => $application->grant_amount ?? 'N/A',
+        'approvalDate' => $application->approval_date ?? now()->toDateString()
+    ]);
 
-            // Get public URL
-            $publicUrl = Storage::url($filePath);
+    // Save PDF and send email
+    $fileName = "{$letterType}_letter_{$applicationId}.pdf";
+    Storage::put("public/letters/$fileName", $pdf->output());
+    $publicUrl = asset("storage/letters/$fileName");
 
-            // Send Email with the public URL as attachment
-            Mail::to($application->applicant->email)
-                ->send(new ApprovalLetterMail($application->applicant->name, $publicUrl));
+    Mail::to($application->applicant->email)
+        ->send(new ApprovalLetterMail($application->applicant->name, $publicUrl));
 
-                // Return URL to access the PDF
-            $publicUrl = asset("storage/storage/approval_letters/$fileName");
-            return response()->json(['message' => 'Approval letter generated and sent successfully','url' => $publicUrl]);
+    return response()->json(['message' => ucfirst($letterType) . ' letter generated successfully', 'file_url' => $publicUrl]);
+}
+public function batchGenerate(Request $request)
+{
+    $applicationIds = $request->input('applicationIds');
+    $letterType = $request->input('letterType');
 
-
-        } catch (\Exception $e) {
-            \Log::error('Error generating approval letter', ['error' => $e->getMessage()]);
-            return response()->json([
-                'message' => 'Failed to generate approval letter. Please try again later.'
-            ], 500);
-        }
+    if (!$applicationIds || !in_array($letterType, ['approval', 'denial', 'request_info'])) {
+        return response()->json(['message' => 'Invalid request'], 400);
     }
+
+    $applications = Application::whereIn('id', $applicationIds)->get();
+
+    foreach ($applications as $application) {
+        // Generate PDF based on letter type
+        $pdf = Pdf::loadView("emails.{$letterType}-letter", [
+            'applicantName' => $application->applicant->name,
+            'grantAmount' => $application->grant_amount,
+            'approvalDate' => $application->approval_date
+        ]);
+
+        // Save and email
+        $fileName = "{$letterType}_letter_{$application->id}.pdf";
+        $filePath = "approval_letters/$fileName";
+        Storage::put($filePath, $pdf->output());
+
+        Mail::to($application->applicant->email)
+            ->send(new ApprovalLetterMail($application->applicant->name, Storage::url($filePath)));
+    }
+
+    return response()->json(['message' => 'Letters generated and sent successfully.']);
 }
 
+}

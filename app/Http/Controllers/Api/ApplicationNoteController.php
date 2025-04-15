@@ -109,4 +109,27 @@ class ApplicationNoteController extends Controller
         $note->delete();
         return response()->json(null, 204);
     }
+
+    public function applicationsByProcessor($processorId)
+{
+    try {
+        // Get all distinct application IDs where the processor added notes
+        $applicationIds = ApplicationNote::where('user_id', $processorId)
+            ->pluck('application_id')
+            ->unique();
+
+        // Load full application details including notes and payments
+        $applications = \App\Models\Application::with(['notes', 'payments'])
+            ->whereIn('id', $applicationIds)
+            ->get();
+
+        return response()->json($applications);
+    } catch (\Exception $e) {
+        \Log::error('Error fetching applications by processor notes: ' . $e->getMessage());
+        return response()->json([
+            'message' => 'Failed to fetch applications. Try again later.'
+        ], 500);
+    }
+}
+
 }

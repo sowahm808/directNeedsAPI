@@ -37,6 +37,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('applications/status/{status}', [ApplicationController::class, 'getByStatus']);
     Route::patch('applications/{applicationId}/close-file', [ApplicationController::class, 'closeFile']);
     Route::post('applications/{applicationId}/exception-reason', [ApplicationController::class, 'addExceptionReason']);
+    Route::get('/applications/notes-by-processor/{processorId}', [ApplicationNoteController::class, 'applicationsByProcessor']);
 
     // State Resources Letter Route
     Route::post('notifications/applications/{applicationId}/state-resources', [NotificationController::class, 'sendStateResourcesLetter']);

@@ -11,7 +11,7 @@ class ApplicationController extends Controller
     {
         // return response()->json(['message' => 'Applications index working']);
 
-        $applications = Application::with(['applicant', 'processor'])->get();
+        $applications = Application::with(['applicant', 'processor','payments', 'notes'])->get();
         return response()->json($applications);
 
 

@@ -15,7 +15,6 @@ class Application extends Model
         'status',
         'grant_amount',
         'approval_date',
-        // New fields from the needs submission form:
         'name',
         'street_address',
         'apartment',
@@ -24,15 +23,21 @@ class Application extends Model
         'zip',
         'phone',
         'email',
-        'role', // e.g., "Parent", "Caregiver", etc.
+        'role',
         'children_count',
-        'children_details', // e.g., "Female, 12; Male, 8"
-        'assistance_needed', // e.g., "Housing Assistance, Utilities"
-        'snap_benefits',     // boolean
+        'children_details',
+        'assistance_needed',
+        'snap_benefits',
         'circumstance_details',
-        'essential_needs',   // e.g., "Legal Assistance, Respite Care"
+        'essential_needs',
         'essential_circumstances',
-        'supporting_documents' // store file path or URL
+        'supporting_documents'
+    ];
+
+    protected $casts = [
+        'assistance_needed' => 'array',
+        'essential_needs' => 'array',
+        'snap_benefits' => 'boolean'
     ];
 
     public function applicant()

@@ -68,11 +68,14 @@ Route::middleware('auth:sanctum')->group(function () {
 
 // Approval Letter Routes
 Route::prefix('applications/{applicationId}/approval-letter')->group(function () {
-    Route::get('generate', [ApprovalLetterController::class, 'generate']);
+    Route::post('generate', [ApprovalLetterController::class, 'generate']);
 });
 
 // ✅ This is the correct POST route for batch generation
 Route::post('applications/generate-letters', [ApprovalLetterController::class, 'batchGenerate']);
+
+Route::get('/applications/{applicationId}/approval-letter/draft', [ApprovalLetterController::class, 'draft']);
+Route::post('/applications/{applicationId}/approval-letter/send', [ApprovalLetterController::class, 'send']);
 
 
     // Diary Reminders

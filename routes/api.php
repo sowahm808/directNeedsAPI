@@ -66,16 +66,16 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/', [VerbalContactController::class, 'logContact']);
     });
 
-// Approval Letter Routes
-Route::prefix('applications/{applicationId}/approval-letter')->group(function () {
-    Route::post('generate', [ApprovalLetterController::class, 'generate']);
-});
+    // Approval Letter Routes
+    Route::prefix('applications/{applicationId}/approval-letter')->group(function () {
+        Route::post('generate', [ApprovalLetterController::class, 'generate']);
+    });
 
-// ✅ This is the correct POST route for batch generation
-Route::post('applications/generate-letters', [ApprovalLetterController::class, 'batchGenerate']);
+    // ✅ This is the correct POST route for batch generation
+    Route::post('applications/generate-letters', [ApprovalLetterController::class, 'batchGenerate']);
 
-Route::get('/applications/{applicationId}/approval-letter/draft', [ApprovalLetterController::class, 'draft']);
-Route::post('/applications/{applicationId}/approval-letter/send', [ApprovalLetterController::class, 'send']);
+    Route::get('/applications/{applicationId}/approval-letter/draft', [ApprovalLetterController::class, 'draft']);
+    Route::post('/applications/{applicationId}/approval-letter/send', [ApprovalLetterController::class, 'send']);
 
 
     // Diary Reminders

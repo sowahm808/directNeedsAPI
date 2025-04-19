@@ -23,10 +23,12 @@ class ApprovalLetterController extends Controller
             $letterType = $request->letter_type;
 
             $application = Application::with('applicant')->findOrFail($applicationId);
+
             if (!$application->applicant) {
                 return response()->json(['message' => 'Applicant not found.'], 404);
             }
 
+            // Prepare dynamic values
             $applicantName = $application->applicant->name;
             $grantAmount = (float) ($application->grant_amount ?? 0);
             $approvalDate = $application->approval_date
@@ -40,16 +42,9 @@ class ApprovalLetterController extends Controller
                 'request_information' => 'emails.request-information-letter',
             };
 
-            // Log to make sure data is present
-            Log::info("Generating PDF for Application ID {$applicationId}", [
-                'letter_type' => $letterType,
-                'applicantName' => $applicantName,
-                'grantAmount' => $grantAmount,
-                'approvalDate' => $approvalDate,
-                'assistanceCategory' => $assistanceCategory
-            ]);
+            // Log input
+            Log::info("Generating {$letterType} letter for Application #{$applicationId}");
 
-            // Try to render view
             $html = view($viewFile, compact(
                 'applicantName',
                 'grantAmount',
@@ -60,19 +55,17 @@ class ApprovalLetterController extends Controller
             $pdf = Pdf::loadHTML($html);
 
             $fileName = "{$letterType}_letter_{$applicationId}.pdf";
-            $relativePath = "public/letters/$fileName";
-            $publicUrl = asset("storage/letters/$fileName");
+            $relativePath = "public/approval_letters/{$fileName}";
+            $publicUrl = asset("storage/approval_letters/{$fileName}");
 
-            // Storage::put($relativePath, $pdf->output());
-            $pdfPath = storage_path("app/public/letters/$fileName");
-file_put_contents($pdfPath, $pdf->output());
-
+            // Save the file using Laravel's storage facade (makes checking existence more reliable)
+            Storage::put($relativePath, $pdf->output());
 
             if (!Storage::exists($relativePath)) {
-                throw new \Exception("PDF file was not created at $relativePath");
+                throw new \Exception("PDF file not saved at expected path.");
             }
 
-            // Send the email with the generated file URL
+            // Send the PDF URL via email
             Mail::to($application->applicant->email)
                 ->send(new ApprovalLetterMail($applicantName, $publicUrl));
 
@@ -93,7 +86,6 @@ file_put_contents($pdfPath, $pdf->output());
             ], 500);
         }
     }
-
 
     public function draft($applicationId)
     {
@@ -151,12 +143,12 @@ file_put_contents($pdfPath, $pdf->output());
             ]);
 
             $fileName = "{$validated['letterType']}_letter_{$application->id}.pdf";
-            Storage::put("public/letters/{$fileName}", $pdf->output());
+            Storage::put("public/approval_letters/{$fileName}", $pdf->output());
 
             Mail::to($application->applicant->email)
                 ->send(new ApprovalLetterMail(
                     $application->applicant->name,
-                    asset("storage/letters/{$fileName}")
+                    asset("storage/approval_letters/{$fileName}")
                 ));
         }
 

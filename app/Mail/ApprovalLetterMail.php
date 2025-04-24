@@ -10,29 +10,35 @@ class ApprovalLetterMail extends Mailable
 {
     use Queueable, SerializesModels;
 
-    public $applicantName;
-    public $filePath;
+    public string $applicantName;
+    public ?string $pdfPath;
+    public ?string $customBody;
+    public ?string $subjectLine;
 
-    public function __construct($applicantName, $filePath)
+    public function __construct(string $applicantName, ?string $pdfPath = null, ?string $customBody = null, ?string $subjectLine = 'Approval Letter')
     {
         $this->applicantName = $applicantName;
-        $this->filePath = $filePath;
+        $this->pdfPath = $pdfPath;
+        $this->customBody = $customBody;
+        $this->subjectLine = $subjectLine;
     }
 
     public function build()
     {
-        return $this->view('emails.approval-letter')
-                    ->subject('Your Approval Letter')
-                    ->attach($this->filePath, [
-                        'as' => 'Approval_Letter.pdf',
-                        'mime' => 'application/pdf',
-                    ]);
-    }
-//     public function build()
-// {
-//     return $this->view('emails.approval-letter')
-//                 ->subject('Approval Letter')
-//                 ->attach(public_path('storage/approval_letters/'.$this->fileName));
-// }
+        $mail = $this->view('emails.approval-letter')
+                     ->subject($this->subjectLine)
+                     ->with([
+                         'applicantName' => $this->applicantName,
+                         'customBody' => $this->customBody,
+                     ]);
 
+        if ($this->pdfPath) {
+            $mail->attach($this->pdfPath, [
+                'as' => 'ApprovalLetter.pdf',
+                'mime' => 'application/pdf',
+            ]);
+        }
+
+        return $mail;
+    }
 }

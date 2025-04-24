@@ -25,6 +25,8 @@ Route::post('/signup', [AuthController::class, 'signup']);
 Route::get('/auth/google', [AuthController::class, 'redirectToGoogle']);
 Route::get('/auth/google/callback', [AuthController::class, 'handleGoogleCallback']);
 
+
+
 // Protected Routes with Sanctum Middleware
 Route::middleware('auth:sanctum')->group(function () {
 
@@ -37,6 +39,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('applications/status/{status}', [ApplicationController::class, 'getByStatus']);
     Route::patch('applications/{applicationId}/close-file', [ApplicationController::class, 'closeFile']);
     Route::post('applications/{applicationId}/exception-reason', [ApplicationController::class, 'addExceptionReason']);
+    Route::get('/applications/notes-by-processor/{processorId}', [ApplicationNoteController::class, 'applicationsByProcessor']);
+    Route::get('/applications/by-user/{userId}', [ApplicationController::class, 'getByUser']);
+    Route::get('/my-applications/latest', [ApplicationController::class, 'getLatestForAuthenticatedUser']);
 
     // State Resources Letter Route
     Route::post('notifications/applications/{applicationId}/state-resources', [NotificationController::class, 'sendStateResourcesLetter']);
@@ -61,12 +66,17 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/', [VerbalContactController::class, 'logContact']);
     });
 
-    // Approval Letter
+    // Approval Letter Routes
     Route::prefix('applications/{applicationId}/approval-letter')->group(function () {
-    Route::get('generate', [ApprovalLetterController::class, 'generate']);
-    // Letter Generation Routes
+        Route::post('generate', [ApprovalLetterController::class, 'generate']);
+    });
+
+    // ✅ This is the correct POST route for batch generation
     Route::post('applications/generate-letters', [ApprovalLetterController::class, 'batchGenerate']);
-});
+
+    Route::get('/applications/{applicationId}/approval-letter/draft', [ApprovalLetterController::class, 'draft']);
+    Route::post('/applications/{applicationId}/approval-letter/send', [ApprovalLetterController::class, 'send']);
+
 
     // Diary Reminders
     Route::apiResource('diary-reminders', DiaryReminderController::class);

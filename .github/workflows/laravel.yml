@@ -14,24 +14,26 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup PHP with extensions
+      - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
           extensions: mbstring, bcmath, sqlite, pdo_sqlite
           coverage: none
 
-      - name: Copy .env
-        run: php -r "file_exists('.env') || copy('.env.example', '.env');"
+      - name: Install Composer dependencies
+        run: |
+          composer install --prefer-dist --no-interaction --no-progress
 
-      - name: Install dependencies
-        run: composer install --prefer-dist --no-progress --no-suggest
+      - name: Copy .env if not exists
+        run: |
+          if [ ! -f .env ]; then cp .env.example .env; fi
 
       - name: Generate application key
         run: php artisan key:generate
 
       - name: Set directory permissions
-        run: chmod -R 777 storage bootstrap/cache
+        run: chmod -R 775 storage bootstrap/cache
 
       - name: Create SQLite database
         run: |

@@ -16,6 +16,7 @@ class User extends Authenticatable
         'email',
         'password',
         'role', // This allows mass assignment for role
+        'fcm_token',
     ];
 
     protected $hidden = [

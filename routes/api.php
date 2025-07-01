@@ -21,7 +21,6 @@ Route::get('/sanctum/csrf-cookie', [CsrfCookieController::class, 'show']);
 
 // Public Authentication Routes
 Route::post('/login', [AuthController::class, 'login']);
-Route::post('/login/firebase', [AuthController::class, 'loginWithFirebase']);
 Route::post('/signup', [AuthController::class, 'signup']);
 Route::get('/auth/google', [AuthController::class, 'redirectToGoogle']);
 Route::get('/auth/google/callback', [AuthController::class, 'handleGoogleCallback']);

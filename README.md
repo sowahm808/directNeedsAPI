@@ -64,16 +64,3 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
-
-## Firebase Integration
-
-This project uses Firebase for authentication, push notifications and file storage.
-Configure the following environment variables in your `.env` file:
-
-```
-FIREBASE_CREDENTIALS=/path/to/firebase_credentials.json
-FIREBASE_DATABASE_URL=https://your-project.firebaseio.com
-FIREBASE_STORAGE_BUCKET=your-project.appspot.com
-```
-
-Use the `/api/login/firebase` endpoint to authenticate with a Firebase ID token.

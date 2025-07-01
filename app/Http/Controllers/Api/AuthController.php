@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
+use App\Services\FirebaseService;
 
 class AuthController extends Controller
 {
@@ -40,6 +41,53 @@ class AuthController extends Controller
             $user->remember_token = Str::random(60);
             $user->save();
         }
+
+        return response()->json([
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => $user->role,
+                'remember_token' => $user->remember_token
+            ],
+            'token' => $token
+        ], 200);
+    }
+
+    // **Login using a Firebase ID token**
+    public function loginWithFirebase(Request $request, FirebaseService $firebase)
+    {
+        $request->validate([
+            'id_token' => 'required|string',
+            'fcm_token' => 'sometimes|string',
+        ]);
+
+        $verified = $firebase->verifyIdToken($request->id_token);
+
+        if (!$verified) {
+            return response()->json(['message' => 'Invalid Firebase token'], 401);
+        }
+
+        $email = $verified->claims()->get('email');
+        $name = $verified->claims()->get('name', $email);
+
+        $user = User::firstOrCreate(
+            ['email' => $email],
+            [
+                'name' => $name,
+                'password' => Hash::make(Str::random(12)),
+                'role' => 'applicant',
+                'remember_token' => Str::random(60),
+            ]
+        );
+
+        if ($request->filled('fcm_token')) {
+            $user->fcm_token = $request->fcm_token;
+            $user->save();
+        }
+
+        $user->tokens()->delete();
+        $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
             'user' => [
